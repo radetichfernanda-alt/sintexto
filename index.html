@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIN TEXTO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Mano Verde";src:url(fonts/ManoVerde-Regular.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Mano Verde";src:url(fonts/ManoVerde-Bold.woff2) format("woff2");font-weight:700}
+:root{--pink:#f0679b;--ink:#2f8a3e;--ink2:#1f5f2a;--pale:#eaf4ec;--txt:#1b1b1b;--mut:#6b6b6b;--hand:"Mano Verde",cursive;--sans:"Instrument Sans",system-ui,sans-serif;--serif:"Instrument Serif",Georgia,serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:var(--txt);font-family:var(--sans)}
+#app{max-width:1100px;margin:0 auto;padding:14px 14px 20px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--hand);font-weight:700;font-size:clamp(34px,5vw,56px);line-height:1;margin:0;color:var(--ink);letter-spacing:.02em}
+.sub{font-size:14px;color:var(--mut);margin:6px 0 0}
+.tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px dashed var(--ink);color:var(--ink);padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{font:600 14px var(--sans);background:#fff;color:var(--ink2);border:1.5px solid var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+.btn:hover{background:var(--pale)} .btn[aria-pressed=true]{background:var(--ink);color:#fff}
+.hand:focus,.town:focus{outline:none}.btn:focus-visible,.hand:focus-visible,.town:focus-visible{outline:2px dashed var(--pink);outline-offset:3px}
+#crumb{position:relative;z-index:6;font-family:var(--hand);font-size:22px;color:var(--ink);margin:10px 0 0;min-height:28px}
+#crumb button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:4px}
+#stage{position:relative;width:100%;aspect-ratio:1000/620;overflow:hidden;overflow:clip}
+.scene{position:absolute;inset:0;width:100%;height:100%;transition:transform .9s cubic-bezier(.6,.05,.25,1),opacity .6s}
+.scene.off{opacity:0;pointer-events:none}
+svg text{font-family:var(--hand)}
+.hand{cursor:pointer}
+.hand .pin{transform-box:fill-box;transform-origin:50% 100%;transition:transform .2s}.hand:hover .pin,.hand:focus .pin,.hand.on .pin{transform:translateY(-5px) scale(1.18)}
+.hand .ring{transform-box:fill-box;transform-origin:center;animation:ring 2.4s ease-out infinite}
+@keyframes ring{0%{transform:scale(1);opacity:.8}80%,100%{transform:scale(3);opacity:0}}
+@keyframes wave{0%,100%{transform:rotate(0) scale(1.12)}25%{transform:rotate(-14deg) scale(1.12)}75%{transform:rotate(12deg) scale(1.12)}}
+.hand .pop{animation:pop .5s backwards cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.hand .pop{transform-box:fill-box;transform-origin:50% 50%}
+.town{cursor:pointer}.town:hover .tl{fill:var(--ink2)}.town:hover circle.d{r:13}
+.tip{position:absolute;pointer-events:none;background:#fff;border:1.5px solid var(--ink);border-radius:10px;padding:4px 10px;font-family:var(--hand);font-size:20px;color:var(--ink2);transform:translate(-50%,-130%);white-space:nowrap;opacity:0;transition:opacity .15s}
+/* ficha */
+#main{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-items:start;margin-top:6px}
+#main.has{grid-template-columns:minmax(0,1.7fr) minmax(290px,1fr)}
+#main:not(.has) #card{display:none}
+#card{position:sticky;top:10px;background:#fff;border-radius:6px;box-shadow:0 0 0 1px rgba(0,0,0,.07),0 8px 30px rgba(0,0,0,.08);padding:18px 18px 14px;transition:opacity .3s}
+#card.fade{opacity:0}
+#card .intro h3{font-family:var(--hand);font-weight:700;color:var(--ink);font-size:28px;margin:0 0 8px;line-height:1}
+#card .intro p{font-size:14.5px;line-height:1.45;margin:0 0 12px}
+.leg{display:flex;gap:10px;align-items:center;font-size:13.5px;margin:8px 0}
+.leg svg{flex:0 0 34px}
+#card .x{position:absolute;z-index:3;background:#fff!important;border-radius:50%;width:34px;height:34px;line-height:30px;top:8px;right:10px;border:none;background:none;font-size:26px;cursor:pointer;color:var(--mut)}
+.cgrid{display:grid;grid-template-columns:44% 1fr;gap:16px}
+.flip{perspective:900px;cursor:pointer}
+.flip .in{position:relative;aspect-ratio:300/380;transition:transform .7s;transform-style:preserve-3d}
+.flip.b .in{transform:rotateY(180deg)}
+.flip .f{position:absolute;inset:0;backface-visibility:hidden}
+.flip .f svg{width:100%;height:100%;display:block}
+.flip .bk{transform:rotateY(180deg)}
+.fbtn{margin-top:8px;width:100%;font-size:13px;padding:6px}
+.where{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.names{font-family:var(--hand);font-weight:700;font-size:34px;line-height:1.02;color:var(--ink);margin:4px 0 12px}
+.ced{border-top:1.5px solid var(--txt);padding-top:8px;font-size:13.5px;line-height:1.4}
+.ced .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+.ced .t{font-family:var(--serif);font-style:italic;font-size:24px;line-height:1.1}
+.quote{font-family:var(--serif);font-size:17px;line-height:1.3;margin:12px 0 0;color:#333}
+.nav{display:flex;justify-content:space-between;margin-top:14px;border-top:1px dashed #cfcfcf;padding-top:10px}
+.nav button{font:600 13px var(--sans);background:none;border:none;color:var(--ink2);cursor:pointer;padding:4px}
+#card .flip .in{aspect-ratio:3/2}
+#card img{display:block}
+.flip .f img{width:100%;height:100%;object-fit:cover;border-radius:3px}
+.flip .ph{width:100%;height:100%;display:flex;justify-content:center;background:#f6f6f6}.flip .ph svg{height:100%;width:auto}
+.obras{display:flex;gap:8px;height:100%;justify-content:center;align-items:center;background:#f4f1ea;border-radius:3px;padding:10px}
+.obras img{max-height:100%;max-width:48%;object-fit:contain;box-shadow:0 3px 10px rgba(0,0,0,.2);border:6px solid #fff}
+.obras img:only-child{max-width:100%}
+#card .where{margin-top:14px}#card .ced{margin-top:10px}
+.also{margin-top:14px}.also .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.also button{border:none;background:none;padding:0;margin:0 8px 0 0;cursor:pointer;width:96px;text-align:left;font:12px var(--sans);color:var(--ink2);vertical-align:top}
+.also img{width:96px;aspect-ratio:3/2;object-fit:cover;border-radius:3px;margin-bottom:3px}
+.cnt{font-size:12px;color:var(--mut);align-self:center}
+.pol img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}.pol{width:200px}
+.ig{display:inline-block;margin:-6px 0 10px;font:600 14px var(--sans);color:var(--pink);text-decoration:none;border-bottom:1.5px solid var(--pink)}
+.ig:hover{color:#c74679}
+.note{margin-top:14px;background:#fdf0f5;border-left:3px solid var(--pink);padding:10px 12px;font-size:13.5px;line-height:1.45;border-radius:0 4px 4px 0}
+.note .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#c74679;margin-bottom:4px}
+.note a{color:#c74679;font-weight:600}
+.obras.many{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px}
+.obras.many img{max-width:100%;max-height:none;width:100%;aspect-ratio:1;object-fit:cover;border-width:3px}
+.olist{list-style:none;margin:4px 0 0;padding:0}.olist li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #ddd;padding:5px 0;font-size:13.5px}.olist i{font-family:var(--serif);font-size:17px}.olist span{color:var(--mut);text-align:right}
+.members{font-size:13px;line-height:1.4;color:#444;margin:0 0 10px}
+.also span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.also .more{display:inline-block;font-size:12px;color:var(--mut);vertical-align:top;margin-top:20px}
+.obras:not(.many) img{height:100%;width:auto;max-height:100%;min-height:0}
+.obras:not(.many) img:not(:only-child){height:auto;max-width:48%;max-height:100%}
+.pend{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fdf0f5;border:2px dashed var(--pink);border-radius:4px}.pend span{font-family:var(--hand);font-size:28px;color:var(--pink)}
+.ced .art{font-weight:700;font-size:20px;margin-top:2px}.ced .tm{font-size:18px;margin:2px 0 8px}.ced .ing{font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.olist .lt{font-size:14px;text-align:left;flex:1}.olist li span:last-child{flex:0 0 auto;max-width:40%}
+.ced .don{font-size:13.5px;margin:-4px 0 8px}.ced .don a{color:var(--pink);font-weight:600}
+.obras .pend.sm{width:46%;height:90%}.obras .pend.sm:only-child{width:100%}.obras .pend.sm span{font-size:20px;text-align:center}
+#logos{display:flex;align-items:center;gap:22px;margin-top:18px}
+#logos .lr{height:56px;width:auto}#logos .lm{height:74px;width:auto}
+@media (max-width:760px){#logos{gap:16px}#logos .lr{height:36px}#logos .lm{height:48px}}
+#swipe{display:none;font-family:var(--hand);color:var(--mut);font-size:17px;text-align:center;margin-top:4px;transition:opacity .4s}#swipe.gone{opacity:0}
+/* álbum */
+#album{display:none;margin-top:8px}
+#album.on{display:block}
+#album h2{font-family:var(--hand);font-weight:700;color:var(--ink);font-size:30px;margin:18px 0 8px}
+.pol{display:inline-block;width:150px;margin:0 14px 18px 0;background:#fff;padding:8px 8px 6px;box-shadow:0 3px 14px rgba(0,0,0,.12);cursor:pointer;vertical-align:top;transition:transform .2s;border:none;text-align:left;font:inherit}
+.pol:nth-child(odd){transform:rotate(-1.6deg)}.pol:nth-child(even){transform:rotate(1.3deg)}
+.pol:hover{transform:rotate(0) scale(1.05)}
+.pol svg{width:100%;display:block;aspect-ratio:300/380}
+.pol b{display:block;font-family:var(--hand);font-size:20px;color:var(--ink2);margin-top:4px;font-weight:700}
+.pol span{font-size:11px;color:var(--mut)}
+.hint{font-size:13px;color:var(--mut);margin-top:8px}
+@media (max-width:760px){
+ #main{grid-template-columns:1fr}
+ #stage.town{aspect-ratio:auto;height:calc(min(190vw,780px)*.62);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ #stage.town::-webkit-scrollbar{display:none}
+ #stage.town .scene{width:min(190vw,780px);right:auto}
+ #stage.town .scene.off{display:none}
+ #swipe{display:block}
+ #card{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:84vh;overflow:auto;border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .35s;z-index:5;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+ #card.open{transform:none}
+ #card .intro{display:none}
+ .names{font-size:28px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1>SIN TEXTO</h1></header>
+<div id="crumb"></div>
+<div id="main">
+<div id="stage">
+ <svg id="island" class="scene" viewBox="0 0 1000 620" aria-label="Mapa de la Isla Grande de Chiloé"></svg>
+ <svg id="castro" class="scene off" viewBox="0 0 1000 620" aria-label="Mapa de Castro"></svg>
+ <svg id="achao" class="scene off" viewBox="0 0 1000 620" aria-label="Mapa de Achao"></svg>
+ <svg id="quemchi" class="scene off" viewBox="0 0 1000 620" aria-label="Mapa de Quemchi"></svg>
+ <div class="tip" id="tip"></div>
+</div>
+<aside id="card" aria-live="polite" aria-label="Ficha del retrato"></aside>
+</div>
+<div id="swipe">← deslizá el mapa →</div>
+<footer id="logos"></footer>
+</div>
+<script>
+// ---------- datos de prueba ----------
+const PAL=[["#f4e3c8","#b5482f","#e2b48e","#2f5d8a"],["#dfe9f3","#2f5d8a","#d9a27c","#c99a2e"]];
+const OBRAS={
+ A:{t:"<i>Convergencias en el Toltén</i>",a:"Leonardo Cravero",ing:"2016"},
+ B:{t:"<i>La marcha hacia el eterno espejismo</i>",a:"Norton Maza",don:"Donación de Juan Cristóbal Gutiérrez",ing:"2026"},
+ C:{t:"Sin título",a:"Llaramby Delgado",don:"Taller Tormenta · <a href=\"https://www.instagram.com/taller.tormenta/\" target=\"_blank\" rel=\"noopener\">@taller.tormenta</a> · <a href=\"https://www.instagram.com/llarambyd/\" target=\"_blank\" rel=\"noopener\">@llarambyd</a>",ing:"2026"},
+ D:{t:"Del ciclo <i>Chiloé</i>",a:"Hernando León",ing:"2026"},
+ E:{t:"<i>Mi paisaje, mi país</i>",a:"Guillermo Núñez",ing:"2016"},
+ F:{t:"<i>Los coros menores</i>",a:"Demian Schopf",ing:"2014"},
+ G:{t:"<i>Unicornio</i>",a:"Felipe Landea",ing:"2025"},
+ H:{t:"<i>Identidad oculta 16</i>",a:"Jorge Tacla",ing:"2018"},
+ I:{t:"<i>Oso de oro</i>",a:"Llaramby Delgado",don:"Taller Tormenta · <a href=\"https://www.instagram.com/taller.tormenta/\" target=\"_blank\" rel=\"noopener\">@taller.tormenta</a> · <a href=\"https://www.instagram.com/llarambyd/\" target=\"_blank\" rel=\"noopener\">@llarambyd</a>",ing:"2026"},
+ J:{t:"Sin título",a:"Gonzalo Donoso",ing:"2016"},
+ K:{t:"<i>Frank Zappa</i>",a:"Hugo Cárdenas",ing:"2026"},
+ L:{t:"<i>Nada es familiar visto de cerca</i>",a:"César Gabler",ing:"2021"},
+ M:{t:"<i>Familia chilena</i>",a:"Anelys Wolf",ing:"2025"}};
+const P=[
+ {id:1,town:"castro",x:190,y:364,inside:1,names:"Erica y Eugenia",place:"Mercado Yumbel · florerías, puestos #53 y #54",photo:"p1",obras:["A","B"],who:["Erica · puesto #53","Eugenia · puesto #54"]},
+ {id:2,town:"castro",x:222,y:364,inside:1,names:"Sergio",place:"Mercado Yumbel · verdulería, puesto #64",photo:"p2",obras:["A"]},
+ {id:3,town:"castro",x:254,y:316,inside:1,names:"Eolita",place:"Mercado Yumbel · pescados, puesto #33",photo:"p3",obras:["C"]},
+ {id:4,town:"castro",x:222,y:316,inside:1,names:"Vanesa",place:"Mercado Yumbel · Oro Marino, puesto #26",photo:"p4",obras:["D"]},
+ {id:5,town:"castro",x:190,y:316,inside:1,names:"Griselda",place:"Mercado Yumbel · Oro Marino, puesto #26",photo:"p5",obras:["A"]},
+ {id:11,town:"castro",x:158,y:364,inside:1,names:"Esteban",place:"Mercado Yumbel · puesto #44",photo:"p11",obras:["A"]},
+ {id:12,town:"castro",x:286,y:316,inside:1,names:"Pablo",place:"Mercado Yumbel · puesto #43",photo:"p12",obras:["A"]},
+ {id:13,town:"castro",x:254,y:364,inside:1,names:"Catalina",place:"Mercado Yumbel",photo:"p13",obras:["G"]},
+ {id:15,town:"castro",x:158,y:316,inside:1,names:"Angélica",place:"Mercado Yumbel · Creaciones Angélica, puesto #11",photo:"p15",obras:["I"]},
+ {id:16,town:"castro",x:758,y:566,inside:1,names:"Carmen",place:"Castro · Aumen: El eco de los montes",photo:"p16",obras:["J"],prop:"none"},
+ {id:17,town:"castro",x:798,y:202,inside:1,names:"Andrés",place:"Castro · Ferretería El Puerto",photo:"p17",obras:["H"],prop:"none"},
+ {id:18,town:"castro",x:772,y:434,inside:1,names:"Edgar",place:"Castro · Transportes Varmontt",photo:"p18",obras:["H"],prop:"none"},
+ {id:19,town:"castro",x:637,y:440,inside:1,names:"Pablo",place:"Castro · Centro Cultural Municipal",photo:"p19",obras:["G"],prop:"none",web:["https://www.centroculturalcastro.cl/inicio/","Centro Cultural de Castro"]},
+ {id:20,town:"castro",x:618,y:552,inside:1,names:"Franco",place:"Castro · Tabaquería Smokeshop 420",photo:"p20",obras:["B"],prop:"none"},
+ {id:21,town:"castro",x:654,y:552,inside:1,names:"Cristian",place:"Castro · Flor y Truco",photo:"p21",obras:["H"],prop:"none",ig:"tiendaflorytruco"},
+ {id:22,town:"castro",x:349,y:554,inside:1,names:"Erick",place:"Castro · Pizzarella",photo:"p22",obras:["F"],prop:"none",ig:"pizzarellacastro"},
+ {id:23,town:"castro",x:733,y:340,inside:1,names:"Carolina y Zoe",place:"Castro · D'isla Gourmet",photo:"p23",obras:["K","A"],who:["Carolina","Zoe"],prop:"none"},
+ {id:24,town:"castro",x:423,y:336,inside:1,names:"Manuela y Antonio",place:"Castro · Ensaladas Damaris",photo:"p24",obras:["G","A"],who:["Manuela","Antonio"],prop:"none"},
+ {id:25,town:"quemchi",x:355,y:344,inside:1,names:"Marcos",place:"Quemchi · Casa Museo Francisco Coloane, encargado",photo:"p25",obras:["A"],web:["https://www.registromuseoschile.cl/663/w3-article-53428.html","Casa Museo en Registro de Museos de Chile"]},
+ {id:26,town:"quemchi",x:480,y:354,inside:1,names:"Catalina",place:"Quemchi · Biblioteca Pública N.° 151 «Edwin Langdon», coordinadora de cultura y biblioteca",photo:"p26",obras:["K"],ig:"cultura__muniquemchi"},
+ {id:27,town:"castro",x:118,y:128,inside:1,names:"Gustavo",place:"Castro · MAM Chiloé, equipo de mediación",photo:"p27",obras:["A"],ig:"mamchiloe"},
+ {id:14,town:"castro",x:639,y:302,inside:1,names:"Las Arpilleras de Chiloé",place:"Castro · Las Arpilleras de Chiloé",photo:"p14",ig:"las_arpilleras_de_chiloe",obras:["G","F","H","A","E","C","D"],who:["Cecilia y Daniela","Ely y Gladys","Marcela","Margot","Luwy","Roxana","Patricia"],note:`En la foto, de izquierda a derecha: Cecilia, Ely, Marcela, Margot, Luwy, Roxana, Gladys, Daniela y Patricia.`,noteTitle:"Quiénes son"},
+ {id:6,town:"castro",x:836,y:532,inside:1,names:"Cristina",place:"Feria Artesanal y Mercado Campesino Lillo · La obrera y el zángano",ig:"obrera_y_zangano",photo:"p6",obras:["D"]},
+ {id:9,town:"castro",x:277,y:118,inside:1,names:"Georgina",place:"Castro · Peluquería Gina",photo:"p9",obras:["A"]},
+ {id:10,town:"castro",x:452,y:196,inside:1,names:"Nicolás",place:"Castro · Naatztar, accesorios, gráficas y repuestos",photo:"p10",obras:["F"],ig:"naatztar"},
+ {id:7,town:"achao",x:602,y:358,inside:1,names:"David",place:"Achao · Biblioteca Pública «Ana Rosa Uribe Uribe», encargado",photo:"p7",obras:["E"],web:["https://www.biblioredes.gob.cl/bibliotecas/quinchao","Biblioteca en Biblioredes"],note:`En la biblioteca está la exposición <i>«Chiloé, naturaleza para expresar y compartir»</i>, una muestra fotográfica itinerante creada por Trasfoco Escuela Audiovisual, de Pep Candela y Ana Sánchez.<br><a href="https://trasfocoescuelaaudiovisual.org/chiloenaturalezaparaexpresarycompartir/" target="_blank" rel="noopener">Ver la exposición ↗</a> · <a href="https://www.instagram.com/trasfocoitinerante/" target="_blank" rel="noopener">@trasfocoitinerante</a>`},
+ {id:8,town:"achao",x:727,y:436,inside:1,names:"María",place:"Achao · El Arca",photo:"p8",obras:["D"],ig:"arcahotel"}
+];
+P.forEach((p,i)=>p.pal=PAL[i%PAL.length]);
+const IMG={"p1": "img/p1.jpg", "p1t": "img/p1t.jpg", "p2": "img/p2.jpg", "p2t": "img/p2t.jpg", "p3": "img/p3.jpg", "p3t": "img/p3t.jpg", "p4": "img/p4.jpg", "p4t": "img/p4t.jpg", "p5": "img/p5.jpg", "p5t": "img/p5t.jpg", "p6": "img/p6.jpg", "p6t": "img/p6t.jpg", "oA": "img/oA.jpg", "oB": "img/oB.jpg", "oC": "img/oC.jpg", "oD": "img/oD.jpg", "p7": "img/p7.jpg", "p7t": "img/p7t.jpg", "oE": "img/oE.jpg", "p8": "img/p8.jpg", "p8t": "img/p8t.jpg", "p9": "img/p9.jpg", "p9t": "img/p9t.jpg", "p10": "img/p10.jpg", "p10t": "img/p10t.jpg", "oF": "img/oF.jpg", "p11": "img/p11.jpg", "p11t": "img/p11t.jpg", "p12": "img/p12.jpg", "p12t": "img/p12t.jpg", "p13": "img/p13.jpg", "p13t": "img/p13t.jpg", "oG": "img/oG.jpg", "p14": "img/p14.jpg", "p14t": "img/p14t.jpg", "oH": "img/oH.jpg", "p15": "img/p15.jpg", "p15t": "img/p15t.jpg", "oI": "img/oI.jpg", "p26": "img/p26.jpg", "p26t": "img/p26t.jpg", "p25": "img/p25.jpg", "p25t": "img/p25t.jpg", "oK": "img/oK.jpg", "oJ": "img/oJ.jpg", "p16": "img/p16.jpg", "p16t": "img/p16t.jpg", "p19": "img/p19.jpg", "p19t": "img/p19t.jpg", "p24": "img/p24.jpg", "p24t": "img/p24t.jpg", "p17": "img/p17.jpg", "p17t": "img/p17t.jpg", "p27": "img/p27.jpg", "p27t": "img/p27t.jpg", "p21": "img/p21.jpg", "p21t": "img/p21t.jpg", "p23": "img/p23.jpg", "p23t": "img/p23t.jpg", "p22": "img/p22.jpg", "p22t": "img/p22t.jpg", "p20": "img/p20.jpg", "p20t": "img/p20t.jpg", "p18": "img/p18.jpg", "p18t": "img/p18t.jpg", "logoRaco": "img/logoRaco.png", "logoMin": "img/logoMin.png"};
+const TOWNS={castro:{name:"Castro",museum:[118,104]},achao:{name:"Achao",museum:[-30,150]},quemchi:{name:"Quemchi",museum:[-30,150]}};
+// ---------- utilidades de dibujo a mano ----------
+let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const NS="http://www.w3.org/2000/svg";
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+const f=n=>n.toFixed(1);
+function cr(pts,closed){const P=closed?[pts[pts.length-1],...pts,pts[0],pts[1]]:[pts[0],...pts,pts[pts.length-1]];
+ let d=`M${f(P[1][0])},${f(P[1][1])}`;
+ for(let i=1;i<P.length-2;i++){const[a,b,c,e]=[P[i-1],P[i],P[i+1],P[i+2]];
+  d+=`C${f(b[0]+(c[0]-a[0])/6)},${f(b[1]+(c[1]-a[1])/6)} ${f(c[0]-(e[0]-b[0])/6)},${f(c[1]-(e[1]-b[1])/6)} ${f(c[0])},${f(c[1])}`}
+ return d+(closed?"Z":"")}
+const jit=(pts,a)=>pts.map(([x,y])=>[x+(rnd()-.5)*a,y+(rnd()-.5)*a]);
+function ln(x1,y1,x2,y2,a=2.5){const n=Math.max(2,Math.round(Math.hypot(x2-x1,y2-y1)/50)),p=[];
+ for(let i=0;i<=n;i++){const t=i/n,e=(i==0||i==n)?.4:1;p.push([x1+(x2-x1)*t+(rnd()-.5)*a*e,y1+(y2-y1)*t+(rnd()-.5)*a*e])}return cr(p)}
+function box(x,y,w,h,a=2){return[ln(x-2,y,x+w+3,y,a),ln(x+w,y-2,x+w,y+h+2,a),ln(x+w+2,y+h,x-3,y+h,a),ln(x,y+h+2,x,y-3,a)].join(" ")}
+const inkStyle={fill:"none",stroke:"var(--ink)","stroke-width":2.4,"stroke-linecap":"round","stroke-linejoin":"round"};
+function path(g,d,extra){return el("path",Object.assign({},inkStyle,{d},extra||{}),g)}
+function label(g,x,y,t,size=22,anchor="middle",fill="var(--ink2)",w=400){const e=el("text",{x,y,"font-size":size,"text-anchor":anchor,fill,"font-weight":w},g);e.textContent=t;return e}
+function waves(g,area,n,col="#9cc9a6"){for(let i=0;i<n;i++){const x=area[0]+rnd()*area[2],y=area[1]+rnd()*area[3];
+ path(g,`M${f(x)},${f(y)} q6,-6 12,0 t12,0`,{stroke:col,"stroke-width":1.8})}}
+// filtros "line boil": el trazo tiembla un poquito como dibujo animado
+function defs(svg){const d=el("defs",{},svg);
+ for(let i=0;i<3;i++){const fl=el("filter",{id:svg.id+"b"+i},d);el("feTurbulence",{type:"fractalNoise",baseFrequency:.03,numOctaves:2,seed:i*7+1,result:"n"},fl);
+  el("feDisplacementMap",{in:"SourceGraphic",in2:"n",scale:3},fl)}
+ const pf=el("filter",{id:"paint",x:0,y:0,width:1,height:1},d);el("feTurbulence",{type:"fractalNoise",baseFrequency:.9,numOctaves:2,result:"t"},pf);
+ el("feColorMatrix",{in:"t",type:"matrix",values:"0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.9 .55",result:"g"},pf);el("feComposite",{in:"g",in2:"SourceGraphic",operator:"in",result:"g2"},pf);
+ el("feBlend",{in:"SourceGraphic",in2:"g2",mode:"multiply"},pf);return d}
+// mano verde (marcador de cada retrato)
+function hand(g,p,i){const o=el("g",{class:"hand",tabindex:0,role:"button","aria-label":`Retrato de ${p.names}, ${p.place}`,"data-id":p.id,transform:`translate(${p.x},${p.y-(p.inside?0:8)})`},g);
+ const s=el("g",{class:"hs"},o),pp=el("g",{class:"pop",style:`animation-delay:${.15+i*.07}s`},s);
+ el("ellipse",{class:"ring",cx:0,cy:0,rx:9,ry:3.5,fill:"none",stroke:"var(--pink)","stroke-width":2},pp);
+ el("ellipse",{cx:0,cy:0,rx:7,ry:2.6,fill:"rgba(0,0,0,.18)"},pp);
+ const pin=el("g",{class:"pin"},pp);
+ el("path",{d:"M0,0 C-3,-9 -15,-16 -15,-29 A15,15 0 1 1 15,-29 C15,-16 3,-9 0,0Z",fill:"var(--pink)",stroke:"#fff","stroke-width":1.5},pin);
+ // museíto: frontón + columnas + base
+ el("path",{d:"M-10,-33 L0,-40 L10,-33Z",fill:"#fff"},pin);
+ [-7,-2.3,2.3,7].forEach(x=>el("rect",{x:x-1.4,y:-32,width:2.8,height:9,fill:"#fff"},pin));
+ el("rect",{x:-10.5,y:-23,width:21,height:2.6,fill:"#fff"},pin);
+ el("rect",{x:-20,y:-48,width:40,height:52,fill:"transparent"},pin);
+ o.addEventListener("click",()=>openCard(p.id));o.addEventListener("keydown",e=>{if(e.key=="Enter"||e.key==" "){e.preventDefault();openCard(p.id)}});
+ o.addEventListener("mouseenter",()=>showTip(o,p.names));o.addEventListener("mouseleave",hideTip);o.addEventListener("focus",()=>showTip(o,p.names));o.addEventListener("blur",hideTip);
+ return o}
+// ---------- ISLA ----------
+const proj=([lo,la])=>[520+(lo+73.8)*330,26+(-la-41.78)*348];
+function drawIsland(){const s=document.getElementById("island");defs(s);
+ const ink=el("g",{class:"ink"},s);
+ waves(ink,[60,40,330,560],26);waves(ink,[680,60,280,520],22);
+ const isl=[[-73.95,-41.86],[-73.83,-41.82],[-73.6,-41.8],[-73.5,-41.86],[-73.52,-41.98],[-73.45,-42.1],[-73.52,-42.2],[-73.6,-42.3],[-73.66,-42.36],[-73.72,-42.43],[-73.74,-42.5],[-73.72,-42.58],[-73.78,-42.65],[-73.66,-42.72],[-73.55,-42.8],[-73.47,-42.88],[-73.55,-43],[-73.6,-43.12],[-73.75,-43.2],[-73.9,-43.32],[-74.1,-43.38],[-74.22,-43.2],[-74.28,-43],[-74.2,-42.8],[-74.18,-42.6],[-74.17,-42.4],[-74.2,-42.2],[-74.12,-42],[-74.05,-41.92]].map(proj);
+ path(ink,cr(jit(isl,5),true),{fill:"#fff","stroke-width":3});
+ const q=[[-73.6,-42.42],[-73.48,-42.43],[-73.38,-42.5],[-73.3,-42.58],[-73.4,-42.6],[-73.52,-42.52],[-73.6,-42.47]].map(proj);
+ path(ink,cr(jit(q,3),true),{fill:"#fff"});
+ // continente (insinuado)
+ path(ink,cr([[905,10],[880,120],[915,240],[890,380],[930,520],[915,615]]),{"stroke-dasharray":"2 9",stroke:"#9cc9a6"});
+ label(s,930,300,"continente",18,"middle","#8fbf9a").setAttribute("transform","rotate(-80 930 300)");
+ label(s,170,330,"Océano Pacífico",22,"middle","#8fbf9a");label(s,770,200,"mar interior",20,"middle","#8fbf9a");
+ // rosa de los vientos
+ // pueblos
+ const others=[["Ancud",-73.83,-41.87],["Chonchi",-73.77,-42.62],["Quellón",-73.6,-43.11]];
+ others.forEach(([n,lo,la])=>{const[x,y]=proj([lo,la]);el("circle",{cx:x,cy:y,r:3.5,fill:"#b9b9b9"},s);label(s,x-9,y+5,n,17,"end","#a7a7a7")});
+ [["castro",-73.77,-42.48,-1],["achao",-73.49,-42.47,1],["quemchi",-73.47,-42.14,1]].forEach(([k,lo,la,side])=>{const[x,y]=proj([lo,la]);const n=P.filter(p=>p.town==k).length;
+  const g=el("g",{class:"town",tabindex:0,role:"button","aria-label":`Entrar a ${TOWNS[k].name}, ${n} retratos`},s);
+  el("circle",{class:"d",cx:x,cy:y,r:10,fill:"var(--pink)",style:"transition:r .2s"},g);
+  el("circle",{cx:x,cy:y,r:18,fill:"none",stroke:"var(--pink)","stroke-width":1.5,"stroke-dasharray":"3 5"},g);
+  const lx=x+side*30,anc=side<0?"end":"start";
+  label(g,lx,y-2,TOWNS[k].name,40,anc,"var(--ink)",700).classList.add("tl");
+  
+  g.addEventListener("click",()=>go(k));g.addEventListener("keydown",e=>{if(e.key=="Enter"){go(k)}});
+  TOWNS[k].pt=[x,y]});
+}
+// ---------- CASTRO ----------
+function palafito(g,x,y,c,w=24){path(g,box(x,y,w,20,1.2),{fill:c,"stroke-width":1.8});path(g,`M${x-3},${y} L${x+w/2},${y-13} L${x+w+3},${y}`,{"stroke-width":1.8,fill:"#fff"});
+ for(let k=0;k<3;k++)path(g,ln(x+3+k*(w-6)/2,y+20,x+3+k*(w-6)/2,y+36,1),{"stroke-width":1.6})}
+function drawCastro(){const s=document.getElementById("castro");defs(s);const ink=el("g",{class:"ink"},s);
+ // costa: el fiordo a la derecha, el río Gamboa abajo
+ const shore=[[872,-10],[884,120],[894,260],[900,380],[896,480],[874,546],[818,580],[650,590],[400,594],[200,590],[-10,586]];
+ const sj=jit(shore,5);path(ink,cr(sj)+" L1010,630 L1010,-10 Z",{fill:"var(--pale)",stroke:"none"});path(ink,cr(sj),{"stroke-width":3});
+ waves(ink,[920,30,70,520],14);waves(ink,[30,600,820,14],14);label(s,470,614,"río Gamboa",15,"middle","#6fae7c");
+ label(s,955,330,"fiordo de Castro",20,"middle","#6fae7c").setAttribute("transform","rotate(-80 955 330)");
+ // calles (trazado real del centro, simplificado)
+ const G={stroke:"#cfcfcf","stroke-width":2},GL=(x1,y1,x2,y2)=>path(ink,ln(x1,y1,x2,y2,4),G);
+ GL(380,230,380,582);GL(550,170,550,586);GL(690,170,690,586);
+ GL(380,230,860,226);GL(330,360,892,356);GL(330,505,890,500);GL(340,566,800,562);
+ path(ink,cr(jit([[852,370],[862,250],[860,140],[852,-10]],2)),{stroke:"#bdbdbd","stroke-width":4,fill:"none"});
+ const sl=(x,y,t,r)=>{const e=label(s,x,y,t,13,"middle","#a9a9a9");if(r)e.setAttribute("transform",`rotate(${r} ${x} ${y})`)};
+ sl(372,300,"O'Higgins",-90);sl(542,215,"San Martín",-90);sl(682,215,"Serrano",-90);sl(868,200,"Pedro Montt",-86);
+ sl(600,353,"Latorre");sl(470,520,"Blanco Encalada");
+ // Av. Galvarino Riveros: del centro hacia el noroeste, al museo
+ path(ink,cr(jit([[382,258],[318,226],[262,196],[214,186]],2)),{stroke:"#bdbdbd","stroke-width":5,fill:"none"});
+ sl(318,246,"Av. Galvarino Riveros",30);
+ // plaza
+ path(ink,box(424,404,86,62,2),{"stroke-width":2});for(let k=0;k<4;k++){const tx=446+(k%2)*42,ty=420+Math.floor(k/2)*24;path(ink,cr(jit([[tx-7,ty],[tx,ty-8],[tx+7,ty],[tx,ty+7]],2),true),{fill:"#cfe6d3","stroke-width":1.6})}
+ label(s,467,484,"Plaza de Armas",15);
+ // iglesia San Francisco, al norte de la plaza
+ const ig=el("g",{},ink);path(ig,box(468,312,62,40,1.5),{fill:"#f3d96b"});
+ [[468,288],[514,288]].forEach(([x,y])=>{path(ig,box(x,y,16,25,1),{fill:"#f3d96b"});path(ig,`M${x-2},${y} L${x+8},${y-24} L${x+18},${y}`,{fill:"#b9a3d6"})});
+ path(ig,`M488,312 L499,298 L510,312`,{fill:"#b9a3d6"});label(s,507,258,"Iglesia",17);
+ // Mercado Yumbel
+ const fe=el("g",{},ink),mx=140,my=262,mw=172,mh=112;
+ path(fe,box(mx,my,mw,mh,1.6),{fill:"#fff","stroke-width":2.6});
+ let aw="";for(let k=0;k<14;k++)aw+=`l6.2,-14 l6.2,14 `;path(fe,`M${mx-3},${my} ${aw}`,{stroke:"#b5482f","stroke-width":2.6});
+ path(fe,ln(mx+4,my+mh-8,mx+mw-4,my+mh-8,1),{stroke:"#cfcfcf","stroke-width":1.6});
+ label(s,mx+mw/2,my+mh+26,"Mercado Yumbel",24,"middle","var(--ink)",700);
+ // Naatztar
+ const nz=el("g",{},ink),nx=420,ny=160;
+ path(nz,box(nx,ny,64,40,1.2),{fill:"#fff","stroke-width":2.2});
+ path(nz,box(nx-2,ny-14,68,14,.6),{fill:"#2f2f3a",stroke:"#2f2f3a","stroke-width":1.6});
+ path(nz,box(nx+8,ny+10,22,30,.4),{fill:"#9cc3e6","stroke-width":1.6});
+ el("circle",{cx:nx+46,cy:ny+24,r:8,fill:"none",stroke:"var(--ink)","stroke-width":2.4},nz);el("circle",{cx:nx+46,cy:ny+24,r:2.5,fill:"var(--ink)"},nz);
+ label(s,nx+72,ny+26,"Naatztar",18,"start");
+ // Peluquería Gina
+ const pg=el("g",{},ink),gx=246,gy=82;
+ path(pg,box(gx,gy,62,40,1.2),{fill:"#fff","stroke-width":2.2});
+ path(pg,box(gx+8,gy+10,20,30,.4),{fill:"#fde7ef","stroke-width":1.6});path(pg,box(gx+36,gy+10,18,14,.4),{fill:"#fff","stroke-width":1.6});
+ el("circle",{cx:gx+42,cy:gy+31,r:3,fill:"none",stroke:"var(--ink)","stroke-width":1.4},pg);el("circle",{cx:gx+50,cy:gy+31,r:3,fill:"none",stroke:"var(--ink)","stroke-width":1.4},pg);
+ path(pg,`M${gx+44},${gy+29} L${gx+52},${gy+20} M${gx+48},${gy+29} L${gx+40},${gy+20}`,{"stroke-width":1.4});
+ label(s,gx+70,gy+26,"Peluquería Gina",18,"start");
+ // Ensaladas Damaris: San Martín, frente a la iglesia
+ const ed=el("g",{},ink),ex2=398,ey2=310;
+ path(ed,box(ex2,ey2,50,30,1),{fill:"#fff","stroke-width":2.2});
+ path(ed,box(ex2-2,ey2-10,54,10,.4),{fill:"#a8d5b0","stroke-width":1.8});
+ path(ed,`M${ex2+12},${ey2+16} q13,14 26,0 Z`,{fill:"#fff","stroke-width":1.6});
+ [[ex2+19,ey2+14,"#a8d5b0"],[ex2+25,ey2+12,"#f2a7a0"],[ex2+31,ey2+14,"#f3d96b"]].forEach(([x,y,c])=>el("circle",{cx:x,cy:y,r:3,fill:c,stroke:"var(--ink)","stroke-width":1},ed));
+ label(s,ex2+25,ey2+44,"Ensaladas Damaris",13);
+ // Las Arpilleras: Serrano, al norte de Latorre
+ const ap=el("g",{},ink),axx=604,ayy=262;
+ path(ap,box(axx,ayy,70,44,1.2),{fill:"#f3ecc0","stroke-width":2.2});
+ path(ap,`M${axx-6},${ayy} L${axx+35},${ayy-28} L${axx+76},${ayy}`,{fill:"#fff","stroke-width":2.2});
+ [["#f2a7a0",axx+8],["#9cc3e6",axx+24],["#f3d96b",axx+40],["#b9a3d6",axx+56]].forEach(([c,x])=>{path(ap,box(x,ayy+8,11,15,.4),{fill:c,"stroke-width":1.4});path(ap,ln(x+2,ayy+12,x+9,ayy+12,.2),{"stroke-width":1})});
+ path(ap,box(axx+28,ayy+28,14,16,.3),{fill:"#fff","stroke-width":1.6});
+ label(s,axx+35,ayy+64,"Las Arpilleras",17);
+ // D'isla Gourmet: Latorre, junto a Serrano
+ const dg=el("g",{},ink),dx=708,dy=314;
+ path(dg,box(dx,dy,50,30,1),{fill:"#fff","stroke-width":2.2});
+ path(dg,box(dx-2,dy-10,54,10,.4),{fill:"#b9a3d6","stroke-width":1.8});
+ path(dg,`M${dx+12},${dy+22} q0,-12 10,-12 q10,0 10,12 Z`,{fill:"#f3ecc0","stroke-width":1.5});path(dg,ln(dx+8,dy+22,dx+36,dy+22,.2),{"stroke-width":1.6});
+ label(s,dx+25,dy+46,"D'isla Gourmet",14);
+ // Ferretería El Puerto: Pedro Montt
+ const fp=el("g",{},ink),fx=770,fy=170;
+ path(fp,box(fx,fy,56,36,1),{fill:"#fff","stroke-width":2.2});
+ path(fp,box(fx-3,fy-12,62,12,.5),{fill:"#9cc3e6","stroke-width":1.8});
+ path(fp,`M${fx+10},${fy+12} l14,14 M${fx+8},${fy+14} l4,-4 l4,4`,{"stroke-width":2});
+ path(fp,box(fx+32,fy+12,16,24,.3),{fill:"#fff","stroke-width":1.5});
+ label(s,fx+28,fy+54,"Ferretería El Puerto",14);
+ // Transportes Varmontt: Pedro Montt, más al sur
+ const bu=el("g",{},ink),bx=740,by=412;
+ path(bu,box(bx,by,64,26,1),{fill:"#f3d96b","stroke-width":2.2});
+ for(let k=0;k<4;k++)path(bu,box(bx+5+k*14,by+5,10,8,.3),{fill:"#fff","stroke-width":1.4});
+ el("circle",{cx:bx+14,cy:by+28,r:5,fill:"#fff",stroke:"var(--ink)","stroke-width":2},bu);el("circle",{cx:bx+50,cy:by+28,r:5,fill:"#fff",stroke:"var(--ink)","stroke-width":2},bu);
+ label(s,bx+72,by-2,"Transportes Varmontt",14,"start");
+ // Centro Cultural: Serrano 320
+ const cc=el("g",{},ink),cx2=600,cy2=402;
+ path(cc,box(cx2,cy2,74,42,1.2),{fill:"#fff","stroke-width":2.2});
+ path(cc,box(cx2-4,cy2-10,82,10,.4),{fill:"#b9a3d6","stroke-width":1.8});
+ for(let k=0;k<3;k++)path(cc,box(cx2+8+k*22,cy2+8,14,18,.3),{fill:["#f2a7a0","#f3d96b","#9cc3e6"][k],"stroke-width":1.4});
+ path(cc,box(cx2+30,cy2+28,14,14,.3),{fill:"#fff","stroke-width":1.5});
+ label(s,cx2+37,cy2+60,"Centro Cultural",14);
+ // Blanco Encalada: Smokeshop 420 y Flor y Truco
+ const sm=el("g",{},ink),sx=600,sy=526;
+ path(sm,box(sx,sy,36,30,1),{fill:"#fff","stroke-width":2.2});path(sm,box(sx+36,sy,36,30,1),{fill:"#fff","stroke-width":2.2});
+ path(sm,box(sx-2,sy-10,40,10,.4),{fill:"#a8d5b0","stroke-width":1.8});path(sm,box(sx+36,sy-10,38,10,.4),{fill:"#f2a7a0","stroke-width":1.8});
+ path(sm,`M${sx+12},${sy+14} q5,-6 0,-10 M${sx+20},${sy+14} q5,-6 0,-10`,{"stroke-width":1.4,stroke:"#9b9b9b"});
+ [[sx+48,sy+18,"#f2a7a0"],[sx+60,sy+18,"#f3d96b"]].forEach(([x,y,c])=>{el("circle",{cx:x,cy:y,r:4,fill:c,stroke:"var(--ink)","stroke-width":1.2},sm);path(sm,ln(x,y+4,x,y+11,.2),{"stroke-width":1.2})});
+ label(s,sx-6,sy+20,"Smokeshop 420",13,"end");label(s,sx+80,sy+20,"Flor y Truco",13,"start");
+ // Pizzarella: Blanco Encalada con O'Higgins
+ const pz=el("g",{},ink),zx=326,zy=528;
+ path(pz,box(zx,zy,46,30,1),{fill:"#fff","stroke-width":2.2});
+ path(pz,box(zx-2,zy-10,50,10,.4),{fill:"#f2a7a0","stroke-width":1.8});
+ label(s,zx+23,zy+48,"Pizzarella",14);
+ // Aumen: Eusebio Lillo, bajando hacia la costanera
+ const au=el("g",{},ink),ux=735,uy=536;
+ path(au,box(ux,uy,46,34,1),{fill:"#e9efdc","stroke-width":2});path(au,`M${ux-4},${uy} L${ux+23},${uy-18} L${ux+50},${uy}`,{fill:"#a8d5b0","stroke-width":2});
+ path(au,box(ux+16,uy+14,14,20,.3),{fill:"#fff","stroke-width":1.5});
+ label(s,ux+23,uy+50,"Aumen",15);
+ // Feria Lillo: costanera
+ const tl=el("g",{},ink),tx=796,ty=498;
+ path(tl,`M${tx-6},${ty} L${tx+10},${ty-16} L${tx+70},${ty-16} L${tx+86},${ty}Z`,{fill:"#a8d5b0","stroke-width":2.4});
+ let fr="";for(let k=0;k<8;k++)fr+=`q5.75,8 11.5,0 `;path(tl,`M${tx-6},${ty} ${fr}`,{fill:"#a8d5b0","stroke-width":1.8});
+ path(tl,ln(tx,ty+4,tx,ty+44,.8),{"stroke-width":2});path(tl,ln(tx+80,ty+4,tx+80,ty+44,.8),{"stroke-width":2});
+ path(tl,box(tx+10,ty+26,60,10,.8),{fill:"#fff","stroke-width":2});
+ [[tx+18,"#f3d96b"],[tx+30,"#f3d96b"],[tx+42,"#f2a7a0"],[tx+54,"#f3d96b"]].forEach(([x,c])=>path(tl,box(x,ty+16,8,10,.4),{fill:c,"stroke-width":1.4}));
+ label(s,tx+40,ty+64,"Feria Lillo",18,"middle","var(--ink)",700);
+ // palafitos
+ const cols=["#f2a7a0","#f3d96b","#9cc3e6","#b9a3d6","#a8d5b0","#f2a7a0"];
+ [[30,552],[60,558],[90,563],[120,566]].forEach(([x,y],k)=>palafito(ink,x,y-38,cols[k]));
+ label(s,90,500,"Palafitos de Gamboa",15);
+ [[880,66],[896,100],[908,134]].forEach(([x,y],k)=>palafito(ink,x,y-36,cols[k+2],22));
+ label(s,850,60,"Palafitos Pedro Montt",15,"end");
+ // Parque Municipal, detrás del museo (sutil)
+ path(ink,cr(jit([[12,14],[110,8],[196,16],[226,52],[224,98],[210,128],[188,124],[170,100],[148,70],[100,58],[40,60],[12,46]],3),true),{fill:"#eef7ef",stroke:"#b9dcc0","stroke-width":1.5});
+ [[34,30],[196,40],[206,90]].forEach(([x,y])=>{el("circle",{cx:x,cy:y,r:7,fill:"#dcefdf",stroke:"#7fbf8c","stroke-width":1.3},ink);path(ink,ln(x,y+7,x,y+12,.2),{stroke:"#7fbf8c","stroke-width":1.3})});
+ label(s,112,34,"Parque Municipal",13,"middle","#6fae7c");
+ // museo (MAM Chiloé), al final de Galvarino Riveros
+ const m=TOWNS.castro.museum;museum(s,ink,m[0],m[1],"Museo (MAM Chiloé)","acá viven las obras");
+ P.filter(p=>p.town=="castro").forEach((p,i)=>hand(s,p,i))}
+function museum(s,ink,x,y,t1,t2){const g=el("g",{},ink),pk={stroke:"var(--pink)"};
+ path(g,box(x-34,y-10,68,38,1.5),Object.assign({fill:"#fde7ef"},pk));path(g,`M${x-40},${y-10} L${x},${y-36} L${x+40},${y-10}`,Object.assign({fill:"#fde7ef"},pk));
+ for(let k=0;k<4;k++)path(g,ln(x-24+k*16,y-4,x-24+k*16,y+24,1),{"stroke-width":2.4,stroke:"var(--pink)"});
+ label(s,x,y+52,t1,21,"middle","var(--pink)",700);label(s,x,y+74,t2,17,"middle","#c85a83")}
+// ---------- ACHAO ----------
+function drawAchao(){const s=document.getElementById("achao");defs(s);const ink=el("g",{class:"ink"},s);
+ // costa: el pueblo mira al canal (abajo)
+ const shore=[[-10,500],[150,492],[320,508],[480,496],[640,510],[790,494],[880,450],[960,390],[1010,370]];
+ const sj=jit(shore,4);path(ink,cr(sj)+" L1010,630 L-10,630 Z",{fill:"var(--pale)",stroke:"none"});path(ink,cr(sj),{"stroke-width":3});
+ waves(ink,[40,545,900,70],22);label(s,520,604,"canal Dalcahue",19,"middle","#6fae7c");
+ // cuadrícula del pueblo + costanera (calle frente al mar)
+ const st=el("g",{},ink);[200,290].forEach(y=>path(st,ln(120,y,880,y-12,3),{stroke:"#c9c9c9","stroke-width":2}));
+ [250,370,520,670,800].forEach(x=>path(st,ln(x,130,x+6,455,3),{stroke:"#c9c9c9","stroke-width":2}));
+ path(st,cr(jit([[60,462],[250,452],[480,456],[700,458],[860,420],[940,360]],3)),{stroke:"#bdbdbd","stroke-width":5,fill:"none"});
+ label(s,170,446,"costanera",17,"middle","#a7a7a7");
+ // plaza
+ path(ink,box(378,302,136,90,2),{"stroke-width":2});for(let k=0;k<6;k++){const tx=402+(k%3)*44,ty=326+Math.floor(k/3)*40;path(ink,cr(jit([[tx-7,ty],[tx,ty-8],[tx+7,ty],[tx,ty+7]],2),true),{fill:"#cfe6d3","stroke-width":1.6})}
+ label(s,446,412,"Plaza",19);
+ // iglesia de madera, frente a la plaza
+ const ig=el("g",{},ink);path(ig,box(400,210,90,58,1.5),{fill:"#e9d3b3"});path(ig,box(432,160,26,50,1),{fill:"#e9d3b3"});
+ path(ig,"M428,160 L445,118 L462,160",{fill:"#a7856a"});path(ig,"M396,210 L445,185 L494,210",{fill:"#a7856a"});
+ label(s,445,150,"Iglesia Santa María de Loreto",17).setAttribute("transform","translate(110,-40)");
+ // biblioteca, a un costado de la plaza
+ path(ink,box(560,312,84,50,1.5),{fill:"#fff"});path(ink,"M554,312 L602,292 L650,312",{fill:"#fff"});
+ for(let k=0;k<5;k++)path(ink,box(570+k*13,324,8,26,.6),{fill:cols2[k],"stroke-width":1.4});
+ label(s,602,262,"Biblioteca",17);label(s,602,282,"Ana Rosa Uribe Uribe",15);
+ // El Arca: casa de madera sobre la costanera
+ const ar=el("g",{},ink),ax=690,ay=394;
+ path(ar,box(ax,ay,74,46,1.4),{fill:"#9cc3e6"});path(ar,`M${ax-6},${ay} L${ax+37},${ay-30} L${ax+80},${ay}`,{fill:"#fff"});
+ for(let r=0;r<3;r++)path(ar,ln(ax+4,ay+12+r*11,ax+70,ay+12+r*11,.5),{stroke:"#5f8fb8","stroke-width":1.2});
+ path(ar,box(ax+12,ay+16,14,14,.4),{fill:"#fff","stroke-width":1.6});path(ar,box(ax+46,ay+16,14,14,.4),{fill:"#fff","stroke-width":1.6});
+ label(s,ax+37,ay+70,"El Arca",19);
+ // muelle
+ path(ink,ln(800,486,830,585,1.5),{"stroke-width":6,stroke:"#b98a5a"});label(s,872,574,"muelle",18);
+ // el museo queda en Castro
+ path(ink,ln(40,150,130,150,2),{"stroke-dasharray":"2 8",stroke:"var(--pink)"});path(ink,"M118,140 L132,150 L118,160",{stroke:"var(--pink)"});
+ label(s,40,128,"desde el museo, en Castro",18,"start","var(--mut)");
+ P.filter(p=>p.town=="achao").forEach((p,i)=>hand(s,p,i))}
+function drawQuemchi(){const s=document.getElementById("quemchi");defs(s);const ink=el("g",{class:"ink"},s);
+ // bahía abajo y a la derecha
+ const shore=[[-10,470],[160,462],[340,476],[520,466],[660,452],[760,420],[830,370],[880,300],[930,250],[1010,236]];
+ const sj=jit(shore,4);path(ink,cr(sj)+" L1010,630 L-10,630 Z",{fill:"var(--pale)",stroke:"none"});path(ink,cr(sj),{"stroke-width":3});
+ waves(ink,[60,520,820,80],20);label(s,420,598,"bahía de Quemchi",19,"middle","#6fae7c");
+ // isla Aucar con su pasarela
+ path(ink,cr(jit([[820,500],[870,478],[930,490],[944,530],[900,556],[836,548]],4),true),{fill:"#e3f1e5","stroke-width":2.2});
+ [[862,506],[904,512],[884,530]].forEach(([x,y])=>{el("circle",{cx:x,cy:y,r:7,fill:"#cfe6d3",stroke:"var(--ink)","stroke-width":1.5},ink)});
+ path(ink,ln(760,430,836,500,1.5),{"stroke-width":5,stroke:"#b98a5a"});
+ label(s,884,582,"isla Aucar",17);
+ // calles y costanera (Av. Yungay)
+ const G={stroke:"#cfcfcf","stroke-width":2};
+ [200,300].forEach(y=>path(ink,ln(110,y,800,y-14,3),G));
+ [230,400,560,700].forEach(x=>path(ink,ln(x,150,x+6,440,3),G));
+ path(ink,cr(jit([[60,446],[260,436],[480,442],[640,430],[740,404],[820,350],[880,284]],3)),{stroke:"#bdbdbd","stroke-width":5,fill:"none"});
+ label(s,170,428,"costanera",15,"middle","#a7a7a7");label(s,620,282,"Yungay",15,"middle","#a7a7a7");
+ // Casa Museo Francisco Coloane (Yungay 22), casa de tejuelas
+ const cm=el("g",{},ink),cx=300,cy=300;
+ path(cm,box(cx,cy,110,68,1.5),{fill:"#f3ecc0"});path(cm,`M${cx-8},${cy} L${cx+55},${cy-38} L${cx+118},${cy}`,{fill:"#fff"});
+ for(let r=0;r<4;r++)for(let k=0;k<7;k++)path(cm,`M${cx+6+k*14},${cy+8+r*14} q7,8 14,0`,{"stroke-width":1,stroke:"#c9a86a",fill:"none"});
+ label(s,cx+55,cy+92,"Casa Museo Francisco Coloane",17);
+ // Biblioteca Pública Municipal N.° 151, sobre la costanera
+ const bi=el("g",{},ink),bx=432,by=310;
+ path(bi,box(bx,by,96,58,1.5),{fill:"#fff"});path(bi,`M${bx-6},${by} L${bx+48},${by-24} L${bx+102},${by}`,{fill:"#fff"});
+ for(let k=0;k<6;k++)path(bi,box(bx+12+k*12,by+14,8,30,.5),{fill:cols2[k%5],"stroke-width":1.4});
+ label(s,bx+48,by-34,"Biblioteca Edwin Langdon",17);
+ // el museo queda en Castro
+ path(ink,ln(40,110,130,110,2),{"stroke-dasharray":"2 8",stroke:"var(--pink)"});path(ink,"M118,100 L132,110 L118,120",{stroke:"var(--pink)"});
+ label(s,40,88,"desde el museo, en Castro",18,"start","var(--mut)");
+ P.filter(p=>p.town=="quemchi").forEach((p,i)=>hand(s,p,i))}
+const cols2=["#f2a7a0","#f3d96b","#9cc3e6","#b9a3d6","#a8d5b0"];
+// ---------- fotos de prueba (SVG) ----------
+function ph(p,kind){const[bg,cl,sk,ac]=p.pal,ob=kind=="obra";
+ const prop={gorro:`<path d="M92,110 C95,55 205,55 208,110 Z" fill="${ac}"/><rect x="86" y="104" width="128" height="16" rx="8" fill="${ac}"/><circle cx="150" cy="56" r="11" fill="${bg}"/>`,
+  flor:`<g transform="translate(205,105)">${[0,72,144,216,288].map(a=>`<circle cx="${12*Math.cos(a*Math.PI/180)}" cy="${12*Math.sin(a*Math.PI/180)}" r="9" fill="${ac}"/>`).join("")}<circle r="6" fill="#f3d96b"/></g>`,
+  "pañuelo":`<path d="M88,135 C90,70 210,70 212,135 L222,170 C180,140 120,140 78,170 Z" fill="${ac}"/>`,none:""}[p.prop];
+ return `<svg viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${ob?"Obra original (imagen de prueba)":"Retrato (foto de prueba)"}">
+ <rect width="300" height="380" fill="${ob?cl:bg}"/>
+ <g ${ob?'filter="url(#paint)"':''}><rect width="300" height="380" fill="${ob?cl:bg}" opacity="${ob?.85:1}"/>
+ <path d="M30,380 C40,250 260,250 270,380 Z" fill="${ob?bg:cl}"/>
+ <ellipse cx="150" cy="150" rx="54" ry="64" fill="${sk}"/>${prop}</g>
+ ${ob?`<rect x="9" y="9" width="282" height="362" fill="none" stroke="#a9853f" stroke-width="18"/><rect x="18" y="18" width="264" height="344" fill="none" stroke="#6b5226" stroke-width="2"/>`:``}
+ <text x="150" y="${ob?352:366}" text-anchor="middle" font-family="Instrument Sans,sans-serif" font-size="12" fill="${ob?"#fff":"#555"}" opacity=".85">${ob?"OBRA ORIGINAL · imagen de prueba":"FOTO DE PRUEBA"}</text></svg>`}
+// ---------- navegación ----------
+let cur="island",curId=null;const st=document.getElementById("stage");
+function go(k){closeCard();const isl=document.getElementById("island");
+ if(k=="island"){document.querySelectorAll(".scene").forEach(s=>{if(s.id!="island"){s.classList.add("off");s.style.transform="scale(.7)"}});
+  isl.classList.remove("off");isl.style.transform="none";cur="island";st.classList.remove("town");st.scrollLeft=0;crumb();swipeHint();return}
+ const[x,y]=TOWNS[k].pt;isl.style.transformOrigin=`${x/10}% ${y/6.2}%`;isl.style.transform="scale(5)";isl.classList.add("off");
+ document.querySelectorAll(".scene").forEach(o=>{if(o.id!="island"&&o.id!=k){o.classList.add("off")}});const t=document.getElementById(k);t.style.transform="scale(.7)";t.classList.remove("off");
+ t.querySelectorAll(".pop").forEach(p=>{p.style.animation="none";p.getBoundingClientRect();p.style.animation=""});
+ requestAnimationFrame(()=>requestAnimationFrame(()=>t.style.transform="none"));cur=k;st.classList.add("town");requestAnimationFrame(()=>{st.scrollLeft=(st.scrollWidth-st.clientWidth)/2});crumb();swipeHint()}
+function swipeHint(){const h=document.getElementById("swipe");h.style.visibility=cur=="island"?"hidden":"visible";h.classList.remove("gone");setTimeout(()=>st.addEventListener("scroll",()=>h.classList.add("gone"),{once:true}),600)}
+function crumb(){const c=document.getElementById("crumb");
+ c.innerHTML=cur=="island"?"":`<button id="back">← CHILOÉ</button>`;
+ const b=document.getElementById("back");if(b)b.onclick=()=>go("island");
+ }
+// tooltip
+const tip=document.getElementById("tip");
+function showTip(o,t){const r=o.getBoundingClientRect(),s=st.getBoundingClientRect();tip.textContent=t;tip.style.left=(r.left+r.width/2-s.left)+"px";tip.style.top=(r.top-s.top)+"px";tip.style.opacity=1}
+function hideTip(){tip.style.opacity=0}
+// camino museo → retrato
+function clearRoutes(t){document.querySelectorAll(".route").forEach(e=>e.remove())}
+function route(p,main){const s=document.getElementById(p.town);
+ const[mx,my]=TOWNS[p.town].museum,ex=p.x,ey=p.y,dx=ex-mx,dy=ey-my,cx=(mx+ex)/2-dy*.22,cy=(my+ey)/2+dx*.22;
+ const d=`M${mx},${my} Q${f(cx)},${f(cy)} ${ex},${ey}`,g=el("g",{class:"route"});s.insertBefore(g,s.querySelector(".hand"));
+ const mk=el("mask",{id:"rm"+p.id,maskUnits:"userSpaceOnUse"},g),mp=el("path",{d,stroke:"#fff","stroke-width":14,fill:"none"},mk);
+ el("path",{d,stroke:main?"#f0679b":"#f7a8c6","stroke-width":main?6:4.5,"stroke-linecap":"round","stroke-dasharray":"0.1 13",fill:"none",mask:`url(#rm${p.id})`},g);
+ const L=mp.getTotalLength();mp.style.strokeDasharray=L;mp.style.strokeDashoffset=L;mp.getBoundingClientRect();
+ mp.style.transition="stroke-dashoffset 1.2s ease-out";mp.style.strokeDashoffset=0}
+// ficha
+const card=document.getElementById("card");
+function photo(p){return p.photo?`<img loading="lazy" decoding="async" src="${IMG[p.photo]}" alt="Retrato: ${p.names} con la obra que eligió">`:`<div class="pend"><span>foto pendiente</span></div>`}
+function openCard(id){const p=P.find(q=>q.id==id);curId=id;
+ if(cur!=p.town)go(p.town);
+ document.querySelectorAll(".hand").forEach(h=>h.classList.toggle("on",h.dataset.id==id));
+ const list=P.filter(q=>q.town==p.town),i=list.indexOf(p);
+ const ob=p.obras.map(k=>OBRAS[k]);
+ const back=p.obras.length?`<div class="obras${p.obras.length>2?" many":""}">${p.obras.map(k=>IMG["o"+k]?`<img loading="lazy" decoding="async" src="${IMG["o"+k]}" alt="Obra de ${OBRAS[k].a}">`:`<div class="pend sm"><span>imagen pendiente</span></div>`).join("")}</div>`:`<div class="pend"><span>obra por confirmar</span></div>`;
+ const also=[...new Set(p.obras.flatMap(k=>P.filter(q=>q.id!=p.id&&q.photo&&q.obras.includes(k))))];
+ card.innerHTML=`<button class="x" aria-label="Cerrar">×</button>
+ <div class="flip" id="flip" title="Tocá para dar vuelta"><div class="in"><div class="f">${photo(p)}</div><div class="f bk">${back}</div></div></div>
+ <div class="where">${p.place}</div><div class="names">${p.names}</div>${p.ig?`<a class="ig" href="https://www.instagram.com/${p.ig}/" target="_blank" rel="noopener">@${p.ig}</a>`:""}${p.web?`<a class="ig" href="${p.web[0]}" target="_blank" rel="noopener">${p.web[1]} ↗</a>`:""}${p.noteTitle?`<p class="members">${p.note}</p>`:""}
+ ${p.obras.length>2?`<div class="ced"><div class="k">Obras elegidas</div><ul class="olist">${ob.map((o,j)=>`<li><span class="lt">${o.ing?`<b>${o.a}</b> · `:""}${o.ing?o.t:`<i>${o.t}</i>`}</span><span>${p.who[j]}</span></li>`).join("")}</ul></div>`:""}${p.obras.length>2?"":ob.map((o,j)=>`<div class="ced"><div class="k">${p.who?(p.who[j].includes(" y ")?"Eligieron ":"Eligió ")+p.who[j]:"Obra elegida"}</div>${o.ing?`<div class="art">${o.a}</div><div class="tm">${o.t}</div>${o.don?`<div class="don">${o.don}</div>`:""}<div class="ing">Ingresada en ${o.ing}</div>`:`<div class="t">${o.t}</div><div>${o.a}${o.y?", "+o.y:""}</div><div>${o.tec}</div><div style="color:var(--mut)">Colección del museo</div>`}</div>`).join("")}${p.obras.length>2?"":""}${p.obras.length?"":`<div class="ced"><div class="k">Obra elegida</div><div class="t">Por confirmar</div></div>`}
+ ${p.note&&!p.noteTitle?`<div class="note"><div class="k">Además, en este lugar</div>${p.note}</div>`:""}
+ ${also.length?`<div class="also"><div class="k">La misma obra la eligieron también</div>${also.slice(0,6).map(q=>`<button data-go="${q.id}" title="${q.place}"><img loading="lazy" decoding="async" src="${IMG[q.photo+"t"]}" alt=""><span>${q.place.split("·").pop()}</span></button>`).join("")}${also.length>6?`<span class="more">y ${also.length-6} más</span>`:""}</div>`:""}
+ <div class="nav"><button id="pv">← anterior</button><span class="cnt">${i+1} / ${list.length}</span><button id="nx">siguiente →</button></div>`;
+ card.classList.add("open");document.getElementById("main").classList.add("has");{const c=document.getElementById("crumb");c.innerHTML=`<button id="back">← ${TOWNS[p.town].name.toUpperCase()}</button>`;document.getElementById("back").onclick=closeCard;}card.scrollTop=0;
+ const fl=card.querySelector("#flip"),fb=card.querySelector("#fb");
+ const lbl=p.obras.length>1?"las obras":"la obra";
+ const flip=()=>{fl.classList.toggle("b")};
+ fl.onclick=flip;card.querySelector(".x").onclick=closeCard;
+ card.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>openCard(+b.dataset.go));
+ card.querySelector("#pv").onclick=()=>openCard(list[(i-1+list.length)%list.length].id);
+ card.querySelector("#nx").onclick=()=>openCard(list[(i+1)%list.length].id);
+ {
+  const tgt=p.obras.length?P.filter(q=>q.obras.some(k=>p.obras.includes(k))):[p];
+  clearRoutes(p.town);tgt.forEach((q,k)=>setTimeout(()=>route(q,q.id==p.id),k*250))}}
+function closeCard(){if(card.classList.contains("open")&&cur!="island")setTimeout(crumb,0);card.classList.remove("open");document.getElementById("main").classList.remove("has");document.querySelectorAll(".hand.on").forEach(h=>h.classList.remove("on"));document.querySelectorAll(".route").forEach(e=>e.remove())}
+document.addEventListener("keydown",e=>{if(e.key=="Escape")closeCard()});
+// manos más grandes en pantallas chicas
+function scaleHands(){const k=Math.min(1.25,Math.max(1,700/Math.max(st.clientWidth,st.scrollWidth)));document.querySelectorAll(".hs").forEach(h=>h.setAttribute("transform",`scale(${k})`))}
+// line boil
+function boil(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;let i=0;setInterval(()=>{i=(i+1)%3;document.querySelectorAll("svg.scene").forEach(s=>s.querySelector(".ink").setAttribute("filter",`url(#${s.id}b${i})`))},170)}
+document.getElementById("logos").innerHTML=`<img loading="lazy" decoding="async" src="${IMG.logoRaco}" alt="RACO" class="lr"><img loading="lazy" decoding="async" src="${IMG.logoMin}" alt="Ministerio de las Culturas, las Artes y el Patrimonio" class="lm">`;drawIsland();drawCastro();drawAchao();drawQuemchi();crumb();scaleHands();boil();
+addEventListener("resize",scaleHands);st.addEventListener("scroll",()=>{if(innerWidth>760){st.scrollLeft=0;st.scrollTop=0}});
+</script>
+</body>
+</html>
